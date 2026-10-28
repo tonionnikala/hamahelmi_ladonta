@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hamahelmi"
+version = "0.1.0"
+description = "Hama/Perler-helmityön ladontakuvion suunnittelu valokuvasta"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Hamahelmi ladonta suunnittelija" }]
+dependencies = [
+    "flask>=2.3",
+    "pillow>=10.0",
+    "numpy>=1.24",
+]
+
+[project.scripts]
+hamahelmi = "hamahelmi.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+hamahelmi = ["templates/*.html", "static/*.css", "static/*.js"]

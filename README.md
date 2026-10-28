@@ -1,0 +1,117 @@
+# Hamahelmi-suunnittelija
+
+Asennettava Linux-komentorivityökalu Hamahelmi (Hama/Perler-helmi)
+-ladontakuvioiden suunnitteluun valokuvista. Paikallinen web-käyttöliittymä,
+ei internet-yhteyttä eikä kirjautumista tarvita ajon aikana.
+
+Ominaisuudet: omavalintaisen kuvan lataus (JPEG, PNG, WebP, BMP, GIF,
+TIFF), vapaasti vedettävä/venytettävä rajaustyökalu (kuten kuvakaappauksen
+aluevalinta), vapaasti säädettävä pegboard-koko, muokattava väripaletti
+(myös tarkka RGB-arvo omalle helmelle) ja värien vaihto/korvaus valmiissa
+kuviossa yksittäin tai koko kuvion laajuisesti.
+
+## Asennus
+
+Vaatimukset: Python 3.9+ ja pip. Internetyhteys tarvitaan vain asennuksen
+aikana (riippuvuuksien: Flask, Pillow, NumPy lataamiseen), ei ohjelman ajon
+aikana.
+
+**Nopein tapa:**
+
+```bash
+./install.sh
+```
+
+Skripti käyttää `pipx`:ää jos se on asennettuna (suositeltu — eristetty
+ympäristö, komento heti PATH:issa), muuten se luo oman venv:in
+`~/.hamahelmi-venv` ja neuvoo miten lisäät sen PATH:iin.
+
+**Manuaalisesti pipx:llä:**
+
+```bash
+pipx install .
+```
+
+**Manuaalisesti pip:llä (venv suositeltu):**
+
+```bash
+python3 -m venv ~/.hamahelmi-venv
+~/.hamahelmi-venv/bin/pip install .
+~/.hamahelmi-venv/bin/hamahelmi
+```
+
+## Käynnistys
+
+Asennuksen jälkeen:
+
+```bash
+hamahelmi
+```
+
+Tämä käynnistää palvelimen osoitteeseen `http://127.0.0.1:5000` ja avaa
+oletusselaimen automaattisesti. Pysäytys: `Ctrl+C`. Voi käynnistää myös
+`python -m hamahelmi`.
+
+Valinnaiset liput:
+
+```bash
+hamahelmi --port 8080     # eri portti
+hamahelmi --host 0.0.0.0   # kuuntele kaikkia verkkoliitäntöjä
+hamahelmi --no-browser      # älä avaa selainta automaattisesti
+hamahelmi --debug            # Flaskin debug-tila (kehitykseen)
+```
+
+## Käyttö
+
+1. Lataa valokuva ("Kuva"-kortti).
+2. Rajaa haluamasi alue vapaasti minkä muotoisena tahansa (vedä siirtääksesi,
+   kulmakahvoista muuttaaksesi kokoa, tai piirrä kokonaan uusi kehys
+   vetämällä kuvan päällä) — "Nollaa rajaus" palauttaa koko kuvan.
+   Pegboard-koon kokosuhde (alla) lukittuu automaattisesti tähän rajaukseen,
+   joten kuvio ei voi vääristyä.
+3. Säädä pegboardin kokonaiskoko ("Pegboard-koko"-kortti, leveys/korkeus
+   helminä — toinen kenttä päivittyy automaattisesti kun muutat toista,
+   jotta kuvasuhde säilyy) ja paina "Luo kuvio".
+4. Muokkaa väripalettia: aktivoi/poista käytöstä värejä, hae ja lisää
+   nimetty väri Wikipedian väriluettelosta ("Lisää nimetystä väristä") tai
+   lisää oma väri tarkoilla RGB-arvoilla, ja "Luo kuvio" uudelleen
+   nähdäksesi vaikutuksen.
+5. Käytä "Vaihda väri" -toimintoa korvataksesi yhden palettivärin toisella
+   koko kuviossa kerralla, tai klikkaa yksittäistä helmeä kuviossa
+   vaihtaaksesi vain sen värin.
+6. "Lataa kuva (PNG)" tallentaa nykyisen kuvion kuvatiedostona.
+
+Tila (kuva, rajaus, taulun koko, paletti, kuvio) tallennetaan automaattisesti
+`~/.hamahelmi/`-kansioon jokaisen muutoksen jälkeen ja palautuu
+automaattisesti seuraavalla käynnistyskerralla.
+
+## Poisto
+
+```bash
+pipx uninstall hamahelmi          # jos asennettu pipx:llä
+rm -rf ~/.hamahelmi-venv           # jos asennettu venv:iin
+rm -rf ~/.hamahelmi                 # tallennettu tila (kuva, paletti, kuvio)
+```
+
+## Paketin rakenne
+
+```
+hamahelmi_ladonta/
+  pyproject.toml
+  install.sh
+  src/hamahelmi/
+    cli.py            # komentorivikäynnistin, avaa selaimen
+    app.py             # Flask-reitit (JSON-API + sivu)
+    store.py            # tila muistissa + levytallennus ~/.hamahelmi/
+    quantize.py          # kuvion laskenta valokuvasta (rajaus, kvantisointi)
+    colorspace.py          # hex/RGB/Lab-väriapufunktiot
+    palette_data.py         # oletusväripaletti
+    wiki_colors.py            # nimettyjen värien hakemisto (Wikipedia, ks. alla)
+    templates/index.html        # sivupohja
+    static/app.js                  # käyttöliittymälogiikka (canvas, rajaustyökalu, API-kutsut)
+    static/style.css                # ulkoasu
+```
+
+`wiki_colors.py` sisältää n. 1200 nimettyä väriä (nimi + hex) Wikipedian
+artikkelista [List of colors (alphabetical)](https://en.wikipedia.org/wiki/List_of_colors_(alphabetical))
+(CC BY-SA 4.0), haettavissa Väripaletti-kortin hakuvalikosta.

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hamahelmi-suunnittelija</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 32 32" width="30" height="30">
+        <circle cx="7" cy="7" r="4" fill="currentColor"/>
+        <circle cx="17" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="27" cy="7" r="4" fill="currentColor" opacity=".55"/>
+        <circle cx="7" cy="17" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="17" cy="17" r="4" fill="currentColor"/>
+        <circle cx="27" cy="17" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="7" cy="27" r="4" fill="currentColor" opacity=".55"/>
+        <circle cx="17" cy="27" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="27" cy="27" r="4" fill="currentColor"/>
+      </svg>
+    </span>
+    <div>
+      <h1>Hamahelmi-suunnittelija</h1>
+      <p class="brand-sub">Ladontakuvion suunnittelu valokuvasta</p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <span class="save-status" id="save-status" title="Tila tallennetaan automaattisesti levylle jokaisen muutoksen jälkeen"></span>
+    <button class="btn btn-ghost btn-danger-ghost" id="btn-reset">Tyhjennä kaikki</button>
+  </div>
+</header>
+
+<main>
+  <div class="panel-grid">
+
+    <!-- ============================ SIVUPALKKI ============================ -->
+    <div class="sidebar">
+
+      <div class="card">
+        <h2>Kuva</h2>
+        <form id="form-upload" class="stacked-form">
+          <input type="file" id="input-photo" name="file"
+                 accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,.tif,.tiff,image/*" required>
+          <button class="btn btn-primary" type="submit">Lataa kuva</button>
+        </form>
+        <p class="msg" id="msg-upload"></p>
+
+        <div class="photo-frame" id="photo-frame">
+          <img id="photo-img" alt="" style="display:none">
+          <svg id="exclude-overlay" class="exclude-overlay"></svg>
+          <div class="crop-box" id="crop-box" style="display:none">
+            <div class="crop-handle" data-handle="nw"></div>
+            <div class="crop-handle" data-handle="ne"></div>
+            <div class="crop-handle" data-handle="sw"></div>
+            <div class="crop-handle" data-handle="se"></div>
+          </div>
+          <p class="empty-state" id="photo-empty">Ei kuvaa vielä</p>
+        </div>
+
+        <div class="tool-mode-row" id="tool-mode-row" style="display:none">
+          <button class="btn btn-ghost tool-mode-btn active" id="btn-mode-crop" type="button">Rajaa</button>
+          <button class="btn btn-ghost tool-mode-btn" id="btn-mode-erase" type="button">Poista alue</button>
+        </div>
+
+        <p class="hint" id="crop-hint" style="display:none">
+          Vedä rajauskehystä tai piirrä uusi vetämällä kuvan päällä - kuten kuvakaappauksen aluevalinnassa.
+          Leveys ja korkeus ovat vapaasti valittavissa: pegboardin kokosuhde (alla) lukittuu
+          automaattisesti tähän rajaukseen, joten kuvio ei voi vääristyä.
+        </p>
+        <button class="btn btn-ghost" id="btn-reset-crop" type="button" style="display:none">Nollaa rajaus</button>
+
+        <p class="hint" id="erase-hint" style="display:none">
+          Piirrä hiirellä turhan kohdan ympäri poistaaksesi sen kuviosta - poistetut kohdat jäävät
+          tyhjiksi helmipaikoiksi. Rajaus voi siis olla muutakin kuin suorakulmio.
+        </p>
+        <div class="erase-actions" id="erase-actions" style="display:none">
+          <button class="btn btn-ghost" id="btn-undo-exclude" type="button">Kumoa poisto</button>
+          <button class="btn btn-ghost btn-danger-ghost" id="btn-clear-exclude" type="button">Tyhjennä poistot</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Pegboard-koko</h2>
+        <p class="hint" style="margin-top:0">
+          Kokosuhde määräytyy yllä valitusta rajauksesta - voit säätää
+          kokonaiskokoa kummasta tahansa kentästä, toinen päivittyy automaattisesti.
+        </p>
+        <div class="two-col">
+          <label>Leveys (helmiä) <input type="number" id="board-width" min="1" max="300" value="20"></label>
+          <label>Korkeus (helmiä) <input type="number" id="board-height" min="1" max="300" value="20"></label>
+        </div>
+        <button class="btn btn-primary btn-lg" id="btn-generate" type="button" style="margin-top:.85rem">Luo kuvio</button>
+        <p class="msg" id="msg-generate"></p>
+      </div>
+
+      <div class="card">
+        <h2>Väripaletti</h2>
+        <div id="palette-list"></div>
+        <hr>
+
+        <div class="wiki-color-picker">
+          <label for="wiki-color-search">Lisää nimetystä väristä (Wikipedia)</label>
+          <input type="text" id="wiki-color-search" autocomplete="off"
+                 placeholder="Hae väriä, esim. &quot;sininen&quot; tai &quot;blue&quot;...">
+          <div class="wiki-color-dropdown" id="wiki-color-dropdown" hidden></div>
+        </div>
+        <hr>
+
+        <div class="stacked-form" id="form-add-color">
+          <label>Oma väri (RGB) - nimi <input type="text" id="new-color-name" placeholder="esim. Kirkkaanvihreä"></label>
+          <div class="rgb-row">
+            <label>R <input type="number" id="new-color-r" min="0" max="255" value="0"></label>
+            <label>G <input type="number" id="new-color-g" min="0" max="255" value="0"></label>
+            <label>B <input type="number" id="new-color-b" min="0" max="255" value="0"></label>
+            <span class="swatch-preview" id="new-color-preview"></span>
+          </div>
+          <button class="btn btn-secondary" id="btn-add-color" type="button">+ Lisää väri</button>
+        </div>
+        <p class="msg" id="msg-palette"></p>
+      </div>
+
+      <div class="card">
+        <h2>Vaihda väri</h2>
+        <div class="two-col">
+          <label>Mistä <select id="recolor-from"></select></label>
+          <label>Mihin <select id="recolor-to"></select></label>
+        </div>
+        <button class="btn btn-secondary" id="btn-recolor" type="button" style="margin-top:.7rem">Korvaa</button>
+        <p class="msg" id="msg-recolor"></p>
+      </div>
+
+      <div class="card">
+        <h2>Käytetyt värit <span class="count-badge" id="legend-total">0</span></h2>
+        <div id="legend-list" class="legend-list"></div>
+      </div>
+
+    </div>
+
+    <!-- ============================== PÄÄALUE ============================== -->
+    <div class="card card-wide main-area">
+      <div class="section-head">
+        <h2>Kuvio</h2>
+        <button class="btn btn-ghost" id="btn-export-png" type="button">Lataa kuva (PNG)</button>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="pattern-canvas" style="display:none"></canvas>
+        <p class="empty-state" id="canvas-empty">Lataa kuva ja paina "Luo kuvio" nähdäksesi ladontakuvion.</p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="cell-popover" id="cell-popover" hidden></div>
+<div class="toast" id="toast"></div>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
